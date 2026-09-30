@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Thumbnail-Preserving Encryption: paper, method, and an interactive local demo." />
+    <title>Thumbnail-Preserving Encryption</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css?v=20260929-4" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="#top" aria-label="TPE home"><span>TPE</span><small>NDSS ’19</small></a>
+      <nav aria-label="Primary navigation">
+        <a href="#idea">The idea</a>
+        <a href="#demo">Live demo</a>
+        <a href="#method">Method</a>
+        <a class="nav-paper" href="./assets/tpe-ndss19.pdf">Read paper ↗</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Balancing image privacy and usability</p>
+          <h1 id="hero-title">Keep the thumbnail.<br /><em>Encrypt the detail.</em></h1>
+          <p class="lede">Thumbnail-Preserving Encryption turns a photo into a reversible ciphertext image while preserving the exact low-resolution preview people use to browse it.</p>
+          <aside class="scope-note" aria-label="Scope and limitation">
+            <span>What remains visible</span>
+            <p><strong>TPE intentionally reveals the thumbnail.</strong> Anyone who can see the ciphertext can also see that low-resolution preview. This research construction protects finer image detail; it is not a production security product.</p>
+          </aside>
+          <div class="hero-actions">
+            <a class="button primary" href="#demo">Try it in your browser</a>
+            <a class="button secondary" href="./assets/tpe-ndss19.pdf">Read the NDSS paper</a>
+          </div>
+          <p class="local-note"><span></span>Your image and key stay in this browser.</p>
+        </div>
+        <div class="hero-visual" aria-label="Diagram comparing an original image, its encrypted form, and the preserved thumbnail">
+          <div class="visual-card original-card"><canvas class="demo-scene" id="hero-source-canvas" aria-label="Original image used by the live demo"></canvas><span>Original detail</span></div>
+          <div class="visual-arrow">→</div>
+          <div class="visual-card encrypted-card is-pending" id="hero-encrypted-card"><canvas class="demo-scene" id="hero-cipher-canvas" aria-label="Actual TPE ciphertext produced by the live demo"></canvas><span id="hero-cipher-label">Preparing ciphertext…</span></div>
+          <div class="thumbnail-chip"><canvas class="demo-scene" id="hero-thumbnail-canvas" aria-label="Exact block-average thumbnail"></canvas><strong>=</strong><span>Same thumbnail</span></div>
+        </div>
+      </section>
+
+      <section id="idea" class="intro-section">
+        <p class="section-index">The idea</p>
+        <div class="intro-grid">
+          <h2>An image can remain browsable without revealing its fine detail.</h2>
+          <div>
+            <p>Conventional encryption hides everything, including the visual cue you need to find a photo. TPE deliberately reveals one measurable property: the average color of each image block.</p>
+            <p>Everything else is mixed by a keyed, reversible substitution–permutation network. Larger blocks reveal a smaller thumbnail; smaller blocks reveal more.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="demo" class="demo-section" aria-labelledby="demo-title">
+        <div class="section-heading">
+          <div><p class="section-index">Live demo</p><h2 id="demo-title">See the construction work.</h2></div>
+          <p><span class="demo-hint">Start with the highlighted slider</span> Drag the block size to choose how recognizable the preserved preview remains. Everything runs locally.</p>
+        </div>
+        <aside class="demo-scope" aria-label="Demo scope">
+          <strong>What this demo establishes</strong>
+          <p>This page verifies reversible RGBA block-sum preservation and identical computed thumbnails. It does not establish the paper’s NR-security bound: the 1–32 rounds are exploratory. Uploads over 1024 px are resized; non-aligned edges use smaller blocks and may reveal more detail; nonce and settings stay only in this tab. “Lossless” means the resized working pixels, and time measures the worker transform.</p>
+        </aside>
+        <div class="demo-shell">
+          <div class="demo-controls">
+            <label class="upload-control" for="image-input"><span>Image</span><strong id="file-name">Use ensemble sample</strong><small>PNG, JPEG, or WebP</small></label>
+            <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" />
+            <label><span>Secret key</span><input id="secret-key" type="password" value="tpe-paper-demo" autocomplete="off" spellcheck="false" /></label>
+            <label class="block-control"><span>Block size <em>Drag me</em><output id="block-output">16 × 16 px</output></span><input id="block-size" type="range" min="4" max="40" step="4" value="16" aria-describedby="block-tradeoff" /><small class="range-legend"><span>More detail</span><span>Less detail</span></small><strong id="block-tradeoff">Balanced preview · release to re-encrypt</strong></label>
+            <label><span>Rounds <output id="round-output">12</output></span><input id="rounds" type="range" min="1" max="32" value="12" /></label>
+            <button class="button primary demo-run" id="encrypt-button" type="button">Encrypt image</button>
+            <button class="button secondary demo-run" id="decrypt-button" type="button" disabled>Decrypt result</button>
+            <div class="status-row"><span class="status-dot"></span><span id="status" role="status">Ready</span><strong id="timing"></strong></div>
+          </div>
+          <div class="canvas-grid">
+            <figure><div class="canvas-wrap"><canvas id="source-canvas" aria-label="Four witches and a cat from the open-source webcomic Pepper and Carrot"></canvas><span class="canvas-badge">Plaintext</span></div><figcaption>Original image <span class="asset-credit">“<a href="https://www.peppercarrot.com/en/viewer/artworks-src__2015-09-15_witches-of-chaosah-family_by-David-Revoy.html">The witches of Chaosah family</a>” by David Revoy, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Cropped.</span></figcaption></figure>
+            <figure><div class="canvas-wrap checker"><canvas id="result-canvas" aria-label="Encrypted version of the ensemble cartoon"></canvas><span class="canvas-badge accent">Ciphertext</span></div><figcaption id="result-caption">Encrypted image</figcaption></figure>
+          </div>
+          <div class="thumbnail-proof is-pending" id="thumbnail-proof">
+            <div class="proof-intro">
+              <span>The preserved signal</span>
+              <strong>The detail changed.<br />The thumbnail did not.</strong>
+            </div>
+            <div class="thumbnail-comparison">
+              <div class="thumbnail-item">
+                <p>From plaintext</p>
+                <canvas id="source-thumbnail"></canvas>
+              </div>
+              <div class="proof-equation" aria-label="is exactly equal to"><strong>=</strong><small>exact</small></div>
+              <div class="thumbnail-item result-thumbnail">
+                <p>From ciphertext</p>
+                <canvas id="result-thumbnail"></canvas>
+                <span class="preserved-badge">Preserved</span>
+              </div>
+            </div>
+            <p class="proof-copy"><strong id="proof-status">Exact block averages</strong><span id="proof-detail">Encrypt the sample to verify the invariant.</span></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="method" class="method-section">
+        <p class="section-index">Method</p>
+        <div class="method-heading"><h2>The paper’s construction,<br />made visible.</h2><p>Each color channel and thumbnail block is processed independently. One round substitutes pixel pairs without changing their sum, then permutes their positions.</p></div>
+        <ol class="method-steps">
+          <li><span>01</span><div class="method-icon grid-icon"></div><h3>Divide</h3><p>Split each channel into b × b blocks. A block’s integer sum defines one exact thumbnail pixel.</p></li>
+          <li><span>02</span><div class="method-icon pair-icon"></div><h3>Substitute</h3><p>Re-rank each pixel pair among every valid pair with the same sum, using key-derived pseudorandomness.</p></li>
+          <li><span>03</span><div class="method-icon shuffle-icon"></div><h3>Permute</h3><p>Shuffle pixels within the block. Repeating both operations mixes detail while the block sum stays fixed.</p></li>
+          <li><span>04</span><div class="method-icon reverse-icon"></div><h3>Reverse</h3><p>Regenerate the same keyed choices, undo each permutation, and reverse each substitution.</p></li>
+        </ol>
+        <div class="invariant">
+          <span>What encryption preserves</span>
+          <div class="invariant-statement">
+            <strong>Each block keeps the same RGBA channel sums.</strong>
+            <code>Σ block<sub>plaintext</sub> = Σ block<sub>ciphertext</sub></code>
+          </div>
+          <p><strong>So the block averages—and the resulting thumbnail—are exactly identical.</strong></p>
+        </div>
+      </section>
+
+      <section class="paper-section">
+        <div><p class="section-index">Paper</p><h2>Balancing Image Privacy and Usability with Thumbnail-Preserving Encryption</h2></div>
+        <div class="paper-meta"><p>Kimia Tajik, Akshith Gunasekaran, Rhea Dutta, Brandon Ellis, Rakesh B. Bobba, Mike Rosulek, Charles V. Wright, and Wu-chi Feng</p><p>Network and Distributed System Security Symposium, 2019</p><div><a class="button primary" href="./assets/tpe-ndss19.pdf">Download PDF</a><a class="text-link" href="https://doi.org/10.14722/ndss.2019.23432">DOI ↗</a></div></div>
+      </section>
+    </main>
+
+    <footer><a class="wordmark" href="#top"><span>TPE</span><small>NDSS ’19</small></a><p>Paper, method, and local research demo.</p><a href="#top">Back to top ↑</a></footer>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

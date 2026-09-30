@@ -1,0 +1,12 @@
+{
+  "name": "thumbnail-preserving-encryption",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/app.js && node --check src/tpe-core.js && node --check src/tpe.worker.js",
+    "serve": "python3 -m http.server 4173 --bind 127.0.0.1",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=22" }
+}
