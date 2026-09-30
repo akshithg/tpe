@@ -2,6 +2,8 @@
 
 This repository combines the project website and a local, interactive implementation of the ideal Thumbnail-Preserving Encryption (TPE) construction from the NDSS 2019 paper, “Balancing Image Privacy and Usability with Thumbnail-Preserving Encryption.”
 
+[Open the live paper site and browser demo.](https://akshithg.xyz/tpe/)
+
 The demo accepts a PNG, JPEG, or WebP image and performs encryption and decryption inside the browser. It does not upload the image, key, or ciphertext. A module Web Worker keeps the page responsive while the construction runs.
 
 ## Run locally
